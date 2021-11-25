@@ -83,9 +83,13 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(cmd)
 	switch cmd {
 	case "help":
-		client.Issues.EditComment(ctx, repo, name, int64(issue), &github.IssueComment{
+		_, _, err := client.Issues.EditComment(ctx, repo, name, int64(issue), &github.IssueComment{
 			Body: github.String(fmt.Sprintf(help, mf.Use, mf.Use, mf.Use)),
 		})
+		if err != nil {
+			lgr.Info("failed to add issues", "error", err.Error())
+			w.WriteHeader(500)
+		}
 		return
 	case "label":
 		if len(tokens) < 3 {
@@ -96,7 +100,6 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			lgr.Info("failed to add issues", "error", err.Error())
 			w.WriteHeader(500)
-			return
 		}
 		return
 	case "merge":
@@ -107,8 +110,8 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			lgr.Info("failed to merge", "error", err.Error())
 			w.WriteHeader(500)
-			return
 		}
+		return
 	default:
 		return
 	}
