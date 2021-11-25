@@ -7,10 +7,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/olegsu/mergebot/pkg/functions"
+	functions "github.com/olegsu/mergebot"
 )
 
 func main() {
+
 	fmt.Println("Starting server")
 
 	http.HandleFunc("/github/webhook", functions.GithubWebhook)

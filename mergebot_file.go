@@ -1,4 +1,4 @@
-package functions
+package function
 
 import (
 	yaml "gopkg.in/yaml.v3"

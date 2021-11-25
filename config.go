@@ -1,4 +1,4 @@
-package config
+package function
 
 import (
 	"io/ioutil"
@@ -13,7 +13,7 @@ type (
 	}
 )
 
-func Build() Config {
+func BuildConfig() Config {
 	appID, _ := strconv.Atoi(os.Getenv("APPLICATION_ID"))
 	privateKey, err := ioutil.ReadFile(os.Getenv("APPLICATION_PRIVATE_KEY_PATH"))
 	if err != nil {

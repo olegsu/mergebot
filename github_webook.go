@@ -1,4 +1,4 @@
-package functions
+package function
 
 import (
 	"context"
@@ -10,14 +10,13 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v40/github"
 	"github.com/olegsu/go-tools/pkg/logger"
-	"github.com/olegsu/mergebot/pkg/config"
 	"github.com/tidwall/gjson"
 )
 
 func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	lgr := logger.New()
 	lgr.Info("received webhook")
-	cnf := config.Build()
+	cnf := BuildConfig()
 	data := read(r.Body)
 	bodyAsStr := string(data)
 	if gjson.Get(bodyAsStr, "sender.type").String() != "User" {
