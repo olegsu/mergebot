@@ -37,6 +37,7 @@ type (
 	Config struct {
 		ApplicationID         int
 		ApplicationPrivateKey []byte
+		WebhookSecret         string
 	}
 )
 
@@ -46,9 +47,11 @@ func BuildConfig() Config {
 	if err != nil {
 		panic(err)
 	}
+	secret := os.Getenv("WEBHOOK_SECRET")
 	cnf := Config{
 		ApplicationID:         appID,
 		ApplicationPrivateKey: privateKey,
+		WebhookSecret:         secret,
 	}
 	return cnf
 }

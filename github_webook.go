@@ -13,7 +13,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var help = `I will here to do all the boring stuff for you!
+var help = `I am here to do all the boring stuff for you!
 Here is what I can do:
 /%s help - show this message
 /%s label {name} - to add label
@@ -21,6 +21,11 @@ Here is what I can do:
 `
 
 func GithubWebhook(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.Write([]byte("405 Method Not Allowed"))
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 	lgr := logger.New()
 	lgr.Info("received webhook")
 	cnf := BuildConfig()
