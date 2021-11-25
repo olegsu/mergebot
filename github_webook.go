@@ -37,6 +37,9 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	issueStr := gjson.Get(bodyAsStr, "issue.number").String()
 	issue, _ := strconv.Atoi(issueStr)
 
+	commentStr := gjson.Get(bodyAsStr, "comment.id").String()
+	commentID, _ := strconv.Atoi(commentStr)
+
 	comment := gjson.Get(bodyAsStr, "comment.body").String()
 	if comment == "" {
 		return
@@ -83,11 +86,11 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(cmd)
 	switch cmd {
 	case "help":
-		_, _, err := client.Issues.EditComment(ctx, repo, name, int64(issue), &github.IssueComment{
+		_, _, err := client.Issues.EditComment(ctx, repo, name, int64(commentID), &github.IssueComment{
 			Body: github.String(fmt.Sprintf(help, mf.Use, mf.Use, mf.Use)),
 		})
 		if err != nil {
-			lgr.Info("failed to add issues", "error", err.Error())
+			lgr.Info("failed to edit comment", "error", err.Error())
 			w.WriteHeader(500)
 		}
 		return
