@@ -13,6 +13,13 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+var help = `I will here to do all the boring stuff for you!
+Here is what I can do:
+/%s help - show this message
+/%s label {name} - to add label
+/%s merge - to merge the pull request
+`
+
 func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	lgr := logger.New()
 	lgr.Info("received webhook")
@@ -75,6 +82,11 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	cmd := tokens[1]
 	fmt.Println(cmd)
 	switch cmd {
+	case "help":
+		client.Issues.EditComment(ctx, repo, name, int64(issue), &github.IssueComment{
+			Body: github.String(fmt.Sprintf(help, mf.Use, mf.Use, mf.Use)),
+		})
+		return
 	case "label":
 		if len(tokens) < 3 {
 			return
