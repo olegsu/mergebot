@@ -1,7 +1,11 @@
 package function
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	b64 "encoding/base64"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -59,4 +63,11 @@ func BuildConfig() Config {
 func decode(in string) ([]byte, error) {
 	uDec, err := b64.URLEncoding.DecodeString(in)
 	return uDec, err
+}
+
+func decodeSha(secret string, in []byte) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write(in)
+	sha := hex.EncodeToString(h.Sum(nil))
+	return fmt.Sprintf("sha256=%s", sha)
 }

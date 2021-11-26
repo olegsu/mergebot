@@ -28,8 +28,17 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	lgr := logger.New()
 	lgr.Info("received webhook")
+	xhub := r.Header.Get("X-Hub-Signature-256")
+	if xhub == "" {
+		lgr.Info("X-Hub-Signature-256 was not provided")
+		return
+	}
 	cnf := BuildConfig()
 	data := read(r.Body)
+	if res := decodeSha(cnf.WebhookSecret, []byte(data)); res != xhub {
+		lgr.Info("Payload was signed by untrustred source", "x-hub", xhub, "result", res)
+		return
+	}
 	bodyAsStr := string(data)
 	if gjson.Get(bodyAsStr, "sender.type").String() != "User" {
 		return
