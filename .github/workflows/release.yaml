@@ -23,3 +23,4 @@ jobs:
         runtime: go116
         region: us-central1
         project_id: mergebot-332919
+        env_vars: APPLICATION_ID=${{ secrets.APPLICATION_ID}},WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }},APPLICATION_PRIVATE_KEY_B64=${{ secrets.APPLICATION_PRIVATE_KEY_B64 }}
