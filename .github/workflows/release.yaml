@@ -1,0 +1,25 @@
+name: release
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  release:
+    name: Build
+    runs-on: "ubuntu-18.04"
+    steps:
+    - uses: actions/checkout@v2
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0.4.0'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+    - id: deploy
+      uses: google-github-actions/deploy-cloud-functions@v0.6.0
+      with:
+        name: github-webhook
+        entry_point: GithubWebhook
+        runtime: go116
+        region: us-central1
+        project_id: mergebot-332919
