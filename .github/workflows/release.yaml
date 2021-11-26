@@ -2,7 +2,7 @@ name: release
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 'main' ]
 
 jobs:
   release:
@@ -16,11 +16,4 @@ jobs:
       with:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
     - id: deploy
-      uses: google-github-actions/deploy-cloud-functions@v0.6.0
-      with:
-        name: github-webhook
-        entry_point: GithubWebhook
-        runtime: go116
-        region: us-central1
-        project_id: mergebot-332919
-        env_vars: APPLICATION_ID=${{ secrets.APPLICATION_ID}},WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }},APPLICATION_PRIVATE_KEY_B64=${{ secrets.APPLICATION_PRIVATE_KEY_B64 }}
+      run: gcloud functions deploy github-webhook --entry-point GithubWebhook --trigger-http  --runtime go116 --allow-unauthenticated --project mergebot-332919 --region us-central1 --set-env-vars APPLICATION_ID=${{ secrets.APPLICATION_ID}},WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }},APPLICATION_PRIVATE_KEY_B64=${{ secrets.APPLICATION_PRIVATE_KEY_B64 }} 
