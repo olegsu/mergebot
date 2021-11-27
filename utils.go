@@ -39,9 +39,10 @@ func UnmarshalMergebotFile(data []byte) (MergebotFile, error) {
 
 type (
 	Config struct {
-		ApplicationID         int
-		ApplicationPrivateKey []byte
-		WebhookSecret         string
+		ApplicationID            int
+		ApplicationPrivateKey    []byte
+		WebhookSecret            string
+		MarketplaceWebhookSecret string
 	}
 )
 
@@ -52,10 +53,12 @@ func BuildConfig() Config {
 		panic(err)
 	}
 	secret := os.Getenv("WEBHOOK_SECRET")
+	marketplaceSecret := os.Getenv("MARKETPLACE_WEBHOOK_SECRET")
 	cnf := Config{
-		ApplicationID:         appID,
-		ApplicationPrivateKey: privateKey,
-		WebhookSecret:         secret,
+		ApplicationID:            appID,
+		ApplicationPrivateKey:    privateKey,
+		WebhookSecret:            secret,
+		MarketplaceWebhookSecret: marketplaceSecret,
 	}
 	return cnf
 }

@@ -35,7 +35,7 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	cnf := BuildConfig()
 	data := read(r.Body)
-	if res := decodeSha(cnf.WebhookSecret, []byte(data)); res != xhub {
+	if res := decodeSha(cnf.WebhookSecret, data); res != xhub {
 		lgr.Info("Payload was signed by untrustred source", "x-hub", xhub, "result", res)
 		return
 	}

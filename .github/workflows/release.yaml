@@ -17,3 +17,5 @@ jobs:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
     - id: deploy
       run: gcloud functions deploy github-webhook --entry-point GithubWebhook --trigger-http  --runtime go116 --allow-unauthenticated --project mergebot-332919 --region us-central1 --set-env-vars APPLICATION_ID=${{ secrets.APPLICATION_ID}},WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }},APPLICATION_PRIVATE_KEY_B64=${{ secrets.APPLICATION_PRIVATE_KEY_B64 }} 
+    - id: deploy-marketplace-webhook
+      run: gcloud functions deploy github-marketplace-webhook --entry-point GithubMarketplaceWebhook --trigger-http  --runtime go116 --allow-unauthenticated --project mergebot-332919 --region us-central1 --set-env-vars MARKETPLACE_WEBHOOK_SECRET=${{ secrets.MARKETPLACE_WEBHOOK_SECRET }}
