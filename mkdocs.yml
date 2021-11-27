@@ -21,3 +21,4 @@ markdown_extensions:
     permalink: true
 nav:
   - Home: index.md
+  - Privacy: privacy.md
