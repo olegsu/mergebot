@@ -14,7 +14,7 @@
     
     
       
-        <title>Mergebot</title>
+        <title>Privacy - Mergebot</title>
       
     
     
@@ -60,11 +60,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#mergebot" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -91,7 +86,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Privacy
             
           </span>
         </div>
@@ -163,12 +158,10 @@
         
   
   
-    
-  
 
 
   <li class="md-tabs__item">
-    <a href="index.html" class="md-tabs__link md-tabs__link--active">
+    <a href="index.html" class="md-tabs__link">
       Home
     </a>
   </li>
@@ -177,10 +170,12 @@
         
   
   
+    
+  
 
 
   <li class="md-tabs__item">
-    <a href="privacy.html" class="md-tabs__link">
+    <a href="privacy.html" class="md-tabs__link md-tabs__link--active">
       Privacy
     </a>
   </li>
@@ -236,71 +231,11 @@
 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Home
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="index.html" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
         Home
       </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#config" class="md-nav__link">
-    Config
-  </a>
-  
-    <nav class="md-nav" aria-label="Config">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    Example
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#commands" class="md-nav__link">
-    Commands
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -311,11 +246,19 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="privacy.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="privacy.html" class="md-nav__link md-nav__link--active">
         Privacy
       </a>
+      
     </li>
   
 
@@ -327,80 +270,48 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#config" class="md-nav__link">
-    Config
-  </a>
-  
-    <nav class="md-nav" aria-label="Config">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    Example
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#commands" class="md-nav__link">
-    Commands
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/olegsu/mergebot/edit/master/docs/index.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/olegsu/mergebot/edit/master/docs/privacy.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="mergebot">Mergebot<a class="headerlink" href="#mergebot" title="Permanent link">&para;</a></h1>
-<p>Chatops over github issues and pull requests.</p>
-<h2 id="config">Config<a class="headerlink" href="#config" title="Permanent link">&para;</a></h2>
-<p>Add <code>.mergebot.yaml</code> file to the repo to configure how mergebot will work for you.</p>
-<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.0.0</span>
-<span class="nt">use</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mb</span> <span class="c1"># change me </span>
-</code></pre></div>
-<h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
-<p>/? help
-/? label {name}
-/? merge</p>
+                  <h1>Privacy</h1>
+                
+                <p>Welcome to Mergebot (together with the services available therein, the "Site") and any web applications or mobile application and tools we may offer (together with the Site, the "Service").</p>
+<p>We value your privacy and security and provide the following Privacy Policy ("Privacy Policy") to describe the ways in which Alconost, Inc., a Virginia corporation ("Company", "us", or "we"), which owns and operates the Site, collects, uses, and shares personally identifiable information ("Personal Information") when you use or visit the Site or use the Service.</p>
+<p>You agree to be bound by this Privacy Policy if you use or visit the Service in any way.</p>
+<p>1.Personal Information Collected by Company
+a.We may collect the following forms of Personal Information when you use, access, view the Service:</p>
+<p>i. Account information.We may collect Personal Information you submit when you register for an account with the Service. This includes your name, contact information (including email address), and profile information. If you login through a third party integrator, we will collect your profile information from the third party integrator.</p>
+<p>ii. OAuth Token Information.We provide serviced to sync certain software code products through users' GitHub or other third party integrators’ repositories. As such, we will collect information about the content you upload or make available through GitHub or other supported third party integration providers.</p>
+<p>iii. Information automatically collected on the Site.We may automatically collect some information when you access the Site. Specifically, may collect information through the use of cookies (small text files placed on your computer), heatmaps, clear .gif files, and log files. Personal Information collected this way may include your IP address, your Service usage history, your referring pages, and information about your computer or mobile device.</p>
+<p>iv. Payment information.We will collect information necessary to process payments for subscriptions to the Service, as more thoroughly described in the Terms of Service.</p>
+<p>v. Information you provide when you contact us.We collect information you submit to Company when you may us or contact us for customer or technical support.</p>
+<p>2.Use of Personal Information
+a.We access and use Personal Information primarily to provide the Service and support for users. Specifically, we may use Personal Information to:</p>
+<p>i.Provide the Service, including access to your content that is hosted on any third party integrators.</p>
+<p>ii.Communicate with third party integrators through an API by making use of your OAuth tokens or as otherwise necessary to facilitate our Services. With your OAuth tokens, we don't read/write any contents of projects on a third party integrators which are not integrated with our service.</p>
+<p>iii.Process subscription payments.</p>
+<p>iv.Provide you with customer and technical support.</p>
+<p>v.Send you emails related to the Service.</p>
+<p>vi.Provide you with offers we believe you will find relevant.</p>
+<p>vii.To monitor and analyze how the Service performs and to optimize it for you and other users.</p>
+<p>b.We may disclose Personal Information as necessary to (i) comply with legal requests or requirements or (ii) to perform the services you have requested.</p>
+<p>3.Children's Privacy
+a.We do not knowingly collect Personal Information from children under the age of 13. We will promptly delete any Personal Information we have found to have been collected from any child under 13. Please contact us immediately if you believe we may have any such Personal Information.</p>
+<p>4.Security
+a.We value your security and employ a number of methods to protect the integrity and security of your Personal Information. This includes encryption of certain financial information and the requirement that users create passwords to access certain features. Nevertheless, we cannot guarantee the security of any Personal Information transmitted over the internet. Therefore, you agree to transmit Personal Information to Company solely at your own risk.</p>
+<p>5.Your California Privacy Rights
+a.California Civil Code Section 1798.83 entitles California customers to request information concerning whether a business has disclosed Personal Information to any third parties for their direct marketing purposes. California residents may request and obtain from us once a year, free of charge, information about the personal information, if any, we disclosed to third parties for direct marketing purposes within the immediately preceding calendar year. If applicable, this information would include a list of the categories of personal information that was shared and the names and addresses of all third parties with which we shared information within the immediately preceding calendar year. If you are a California resident and would like to make such a request, please submit your request in writing to: oleg2807@gmail.com</p>
+<p>6.Account Information
+a.You may correct certain Personal Information at any time by logging into your User Account (as that term is defined in the Terms of Service). If you wish to cancel your account, please contact us through https://olegsu.github.io/mergebot/. Please note that in some cases we may retain some elements of Personal Information as required by law or pursuant to our business continuity or backup policies.</p>
+<p>7.Modification
+a.We reserve the right to update, amend or replace this Privacy Policy at any time in our sole discretion and without notice by changing this document. The date on which the Privacy Policy was last updated will be noted at the top of the Privacy Policy.</p>
                 
               
               
@@ -419,21 +330,21 @@
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
-      
         
-        <a href="privacy.html" class="md-footer__link md-footer__link--next" aria-label="Next: Privacy" rel="next">
+        <a href="index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Home" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
-                Next
+                Previous
               </span>
-              Privacy
+              Home
             </div>
           </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
         </a>
+      
       
     </nav>
   
