@@ -87,49 +87,53 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens := strings.Split(comment, " ")
-	if len(tokens) == 1 {
-		return
-	}
-	root := tokens[0]
-	if root != fmt.Sprintf("/%s", mf.Use) {
-		return
-	}
+	lines := strings.Split(comment, "\n")
+	for _, l := range lines {
+		tokens := strings.Split(l, " ")
+		if len(tokens) == 1 {
+			continue
+		}
+		root := tokens[0]
+		if root != fmt.Sprintf("/%s", mf.Use) {
+			continue
+		}
 
-	cmd := tokens[1]
-	fmt.Println(cmd)
-	switch cmd {
-	case "help":
-		_, _, err := client.Issues.EditComment(ctx, repo, name, int64(commentID), &github.IssueComment{
-			Body: github.String(fmt.Sprintf(help, mf.Use, mf.Use, mf.Use)),
-		})
-		if err != nil {
-			lgr.Info("failed to edit comment", "error", err.Error())
-			w.WriteHeader(500)
+		cmd := tokens[1]
+		switch cmd {
+		case "help":
+			_, _, err := client.Issues.EditComment(ctx, repo, name, int64(commentID), &github.IssueComment{
+				Body: github.String(fmt.Sprintf(help, mf.Use, mf.Use, mf.Use)),
+			})
+			if err != nil {
+				lgr.Info("failed to edit comment", "error", err.Error())
+				w.WriteHeader(500)
+				return
+			}
+		case "label":
+			if len(tokens) < 3 {
+				continue
+			}
+			labels := tokens[2:]
+			_, _, err := client.Issues.AddLabelsToIssue(ctx, repo, name, issue, labels)
+			if err != nil {
+				lgr.Info("failed to add issues", "error", err.Error())
+				w.WriteHeader(500)
+				return
+			}
+		case "merge":
+			message := gjson.Get(bodyAsStr, "issue.title").String()
+			_, _, err := client.PullRequests.Merge(ctx, repo, name, issue, message, &github.PullRequestOptions{
+				MergeMethod: "squash",
+			})
+			if err != nil {
+				lgr.Info("failed to merge", "error", err.Error())
+				w.WriteHeader(500)
+				return
+			}
+		default:
+			lgr.Info("unknown command", "cmd", cmd)
+			continue
 		}
-		return
-	case "label":
-		if len(tokens) < 3 {
-			return
-		}
-		labels := tokens[2:]
-		_, _, err := client.Issues.AddLabelsToIssue(ctx, repo, name, issue, labels)
-		if err != nil {
-			lgr.Info("failed to add issues", "error", err.Error())
-			w.WriteHeader(500)
-		}
-		return
-	case "merge":
-		message := gjson.Get(bodyAsStr, "issue.title").String()
-		_, _, err := client.PullRequests.Merge(ctx, repo, name, issue, message, &github.PullRequestOptions{
-			MergeMethod: "squash",
-		})
-		if err != nil {
-			lgr.Info("failed to merge", "error", err.Error())
-			w.WriteHeader(500)
-		}
-		return
-	default:
-		return
 	}
+	return
 }
