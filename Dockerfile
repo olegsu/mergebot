@@ -8,7 +8,7 @@ COPY . .
 
 RUN go build -o server cmd/server/main.go
 
-FROM golang:1.17-alpine as dist
+FROM alpine:3.15 as dist
 
 COPY --from=build /app/server /usr/local/bin/server
 
