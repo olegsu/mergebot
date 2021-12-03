@@ -3,7 +3,7 @@
 Chatops over github issues and pull requests.
 
 ## Config
-The default prefix is `/bot`. You can controll it by adding `.prbot.yaml` file to the root of the repository`
+The default prefix is `/bot`. You can control it by adding a `.prbot.yaml` file to the root of the repository`
 
 ### Example
 ```yaml
