@@ -2,7 +2,7 @@ name: release
 
 on:
   push:
-    branches: [ 'cloud-run' ]
+    branches: [ 'main' ]
 
 jobs:
   release:
@@ -18,9 +18,11 @@ jobs:
       with:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
     - name: Build
-      run: docker build -t us-central1-docker.pkg.dev/mergebot-332919/pull-requests-robot/server:$(cat VERSION) .
+      run: docker build -t $(cat docker-repository.txt):$(cat VERSION) .
     - name: Push
       run: |
         gcloud auth configure-docker us-central1-docker.pkg.dev
-        docker push us-central1-docker.pkg.dev/mergebot-332919/pull-requests-robot/server:$(cat VERSION)
+        docker push $(cat docker-repository.txt):$(cat VERSION)
+    - name: Update Cloud run
+      run: gcloud run services update server --region us-central1 --image $(cat docker-repository.txt):$(cat VERSION)
 
