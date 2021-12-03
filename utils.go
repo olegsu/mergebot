@@ -23,14 +23,14 @@ func read(reader io.ReadCloser) []byte {
 }
 
 type (
-	MergebotFile struct {
+	PrBotFile struct {
 		Version string `yaml:"version"`
 		Use     string `yaml:"use"`
 	}
 )
 
-func UnmarshalMergebotFile(data []byte) (MergebotFile, error) {
-	mf := MergebotFile{}
+func UnmarshalPrBotFile(data []byte) (PrBotFile, error) {
+	mf := PrBotFile{}
 	if err := yaml.Unmarshal(data, &mf); err != nil {
 		return mf, err
 	}

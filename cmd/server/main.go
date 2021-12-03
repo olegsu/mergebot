@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	functions "github.com/olegsu/mergebot"
+	functions "github.com/olegsu/pull-requests-bot"
 )
 
 func main() {

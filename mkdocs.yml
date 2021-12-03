@@ -1,7 +1,7 @@
-site_name: Mergebot
+site_name: Pull Requests Robot
 strict: true
-repo_url: https://github.com/olegsu/mergebot
-repo_name: olegsu/mergebot
+repo_url: https://github.com/olegsu/pull-requests-robot
+repo_name: olegsu/pull-requests-robot
 use_directory_urls: false
 theme:
   name: material

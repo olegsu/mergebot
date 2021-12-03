@@ -70,21 +70,22 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	client := github.NewClient(&http.Client{Transport: itr})
 	ctx := context.Background()
 
-	fileContent, _, _, err := client.Repositories.GetContents(ctx, repo, name, ".mergebot.yaml", nil)
+	prbot := PrBotFile{
+		Version: "1.0.0",
+		Use:     "bot",
+	}
+	fileContent, _, _, err := client.Repositories.GetContents(ctx, repo, name, ".prbot.yaml", nil)
 	if err != nil {
-		lgr.Info("failed to get .mergebot.yaml file content", "error", err.Error())
-		return
+		lgr.Info("failed to get .prbot.yaml file content, using default config", "error", err.Error())
 	}
 	content, err := fileContent.GetContent()
 	if err != nil {
-		w.WriteHeader(500)
-		return
+		lgr.Info("failed to get .prbot.yaml content, using default config", "error", err.Error())
 	}
 
-	mf, err := UnmarshalMergebotFile([]byte(content))
+	prbot, err = UnmarshalPrBotFile([]byte(content))
 	if err != nil {
-		w.WriteHeader(500)
-		return
+		lgr.Info("failed to unmarshal .prbot.yaml, using default config", "error", err.Error())
 	}
 
 	lines := strings.Split(comment, "\n")
@@ -94,7 +95,7 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		root := tokens[0]
-		if root != fmt.Sprintf("/%s", mf.Use) {
+		if root != fmt.Sprintf("/%s", prbot.Use) {
 			continue
 		}
 
@@ -102,7 +103,7 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 		switch cmd {
 		case "help":
 			_, _, err := client.Issues.EditComment(ctx, repo, name, int64(commentID), &github.IssueComment{
-				Body: github.String(fmt.Sprintf(help, mf.Use, mf.Use, mf.Use)),
+				Body: github.String(fmt.Sprintf(help, prbot.Use, prbot.Use, prbot.Use)),
 			})
 			if err != nil {
 				lgr.Info("failed to edit comment", "error", err.Error())

@@ -1,4 +1,4 @@
-module github.com/olegsu/mergebot
+module github.com/olegsu/pull-requests-bot
 
 go 1.17
 

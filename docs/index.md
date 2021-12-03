@@ -1,14 +1,14 @@
-# Mergebot
+# Pull Requests Robot
 
 Chatops over github issues and pull requests.
 
 ## Config
-Add `.mergebot.yaml` file to the repo to configure how mergebot will work for you.
+The default prefix is `/bot`. You can controll it by adding `.prbot.yaml` file to the root of the repository`
 
 ### Example
 ```yaml
 version: 1.0.0
-use: mb # change me 
+use: bot # change me 
 ```
 
 ### Commands
