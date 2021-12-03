@@ -77,17 +77,18 @@ func GithubWebhook(w http.ResponseWriter, r *http.Request) {
 	fileContent, _, _, err := client.Repositories.GetContents(ctx, repo, name, ".prbot.yaml", nil)
 	if err != nil {
 		lgr.Info("failed to get .prbot.yaml file content, using default config", "error", err.Error())
-	}
-	content, err := fileContent.GetContent()
-	if err != nil {
-		lgr.Info("failed to get .prbot.yaml content, using default config", "error", err.Error())
-	}
+	} else {
+		content, err := fileContent.GetContent()
+		if err != nil {
+			lgr.Info("failed to get .prbot.yaml content, using default config", "error", err.Error())
+		}
 
-	prbot, err = UnmarshalPrBotFile([]byte(content))
-	if err != nil {
-		lgr.Info("failed to unmarshal .prbot.yaml, using default config", "error", err.Error())
-	}
+		prbot, err = UnmarshalPrBotFile([]byte(content))
+		if err != nil {
+			lgr.Info("failed to unmarshal .prbot.yaml, using default config", "error", err.Error())
+		}
 
+	}
 	lines := strings.Split(comment, "\n")
 	for _, l := range lines {
 		tokens := strings.Split(l, " ")
