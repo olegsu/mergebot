@@ -2,7 +2,7 @@ name: release
 
 on:
   push:
-    branches: [ 'main' ]
+    branches: [ 'cloud-run' ]
 
 jobs:
   release:
@@ -10,12 +10,17 @@ jobs:
     runs-on: "ubuntu-18.04"
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
     - id: 'auth'
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v0.4.0'
       with:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-    - id: deploy
-      run: gcloud functions deploy github-webhook --entry-point GithubWebhook --trigger-http  --runtime go116 --allow-unauthenticated --project mergebot-332919 --region us-central1 --set-env-vars APPLICATION_ID=${{ secrets.APPLICATION_ID}},WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }},APPLICATION_PRIVATE_KEY_B64=${{ secrets.APPLICATION_PRIVATE_KEY_B64 }} 
-    - id: deploy-marketplace-webhook
-      run: gcloud functions deploy github-marketplace-webhook --entry-point GithubMarketplaceWebhook --trigger-http  --runtime go116 --allow-unauthenticated --project mergebot-332919 --region us-central1 --set-env-vars MARKETPLACE_WEBHOOK_SECRET=${{ secrets.MARKETPLACE_WEBHOOK_SECRET }}
+    - name: Build
+      run: docker build -t us-central1-docker.pkg.dev/mergebot-332919/pull-requests-robot/server:$(cat VERSION) .
+    - name: Push
+      run: |
+        gcloud auth configure-docker us-central1-docker.pkg.dev
+        docker push us-central1-docker.pkg.dev/mergebot-332919/pull-requests-robot/server:$(cat VERSION)
+

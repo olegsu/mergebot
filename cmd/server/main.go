@@ -7,14 +7,16 @@ import (
 	"log"
 	"net/http"
 
-	functions "github.com/olegsu/pull-requests-bot"
+	"github.com/olegsu/pull-requests-bot/pkg/config"
+	"github.com/olegsu/pull-requests-bot/pkg/http/handlers"
 )
 
 func main() {
 
 	fmt.Println("Starting server")
-
-	http.HandleFunc("/github/webhook", functions.GithubWebhook)
+	cnf := config.BuildConfig()
+	http.HandleFunc("/github/webhook", handlers.GithubWebhook(cnf))
+	http.HandleFunc("/github/marketplace", handlers.GithubMarketplaceWebhook(cnf))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
