@@ -136,7 +136,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 				}
 			case "workflow":
 				file := tokens[2]
-				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
+				resp, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
 					Ref: gjson.Get(bodyAsStr, "repository.default_branch").String(),
 				})
 				if err != nil {
@@ -144,6 +144,8 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 					w.WriteHeader(500)
 					return
 				}
+				body := read(resp.Body)
+				lgr.Info("workflow dispatch event created", "response", body)
 			default:
 				continue
 			}
