@@ -134,6 +134,14 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 					w.WriteHeader(500)
 					return
 				}
+			case "workflow":
+				file := tokens[2]
+				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{})
+				if err != nil {
+					lgr.Info("failed to run workflow", "error", err.Error())
+					w.WriteHeader(500)
+					return
+				}
 			default:
 				continue
 			}
