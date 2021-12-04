@@ -10,6 +10,7 @@ require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-github/v29 v29.0.2 // indirect
 	github.com/google/go-github/v40 v40.0.0 // indirect
+	github.com/google/go-github/v41 v41.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/olegsu/go-tools v0.0.0-20210831145405-166a09aff939 // indirect
 	github.com/tidwall/gjson v1.11.0 // indirect

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/v40/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/olegsu/go-tools/pkg/logger"
 	"github.com/olegsu/pull-requests-bot/pkg/config"
 	"github.com/tidwall/gjson"
@@ -136,7 +136,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 				}
 			case "workflow":
 				file := tokens[2]
-				resp, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
+				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
 					Ref: gjson.Get(bodyAsStr, "repository.default_branch").String(),
 				})
 				if err != nil {
@@ -144,8 +144,14 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 					w.WriteHeader(500)
 					return
 				}
-				body := read(resp.Body)
-				lgr.Info("workflow dispatch event created", "response", body)
+				_, _, err = client.Issues.CreateComment(ctx, repo, name, issue, &github.IssueComment{
+					Body: github.String(fmt.Sprintf("Workflow %s started", file)),
+				})
+				if err != nil {
+					lgr.Info("failed to comment on issue", "error", err.Error())
+					w.WriteHeader(500)
+					return
+				}
 			default:
 				continue
 			}
