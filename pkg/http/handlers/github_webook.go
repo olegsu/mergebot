@@ -102,6 +102,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 			}
 
 			cmd := tokens[1]
+			lgr.Info("parsing command", "cmd", l)
 			switch cmd {
 			case "help":
 				_, _, err := client.Issues.EditComment(ctx, repo, name, int64(commentID), &github.IssueComment{
@@ -134,7 +135,6 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 					return
 				}
 			default:
-				lgr.Info("unknown command", "cmd", cmd)
 				continue
 			}
 		}
