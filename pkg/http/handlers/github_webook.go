@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v41/github"
 	"github.com/olegsu/go-tools/pkg/logger"
 	"github.com/olegsu/pull-requests-bot/pkg/config"
-	"github.com/tidwall/gjson"
 )
 
 var help = `I am here to do all the boring stuff for you!
@@ -30,38 +29,35 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 		}
 		lgr := logger.New()
 		lgr.Info("received webhook")
-		xhub := r.Header.Get("X-Hub-Signature-256")
-		if xhub == "" {
-			lgr.Info("X-Hub-Signature-256 was not provided")
-			return
-		}
+
 		data := read(r.Body)
-		if res := decodeSha(cnf.WebhookSecret, data); res != xhub {
-			lgr.Info("Payload was signed by untrustred source", "x-hub", xhub, "result", res)
+		if !cnf.SkipPayloadValidation {
+			if !isValidBody(r.Header.Get("X-Hub-Signature-256"), data, cnf.WebhookSecret) {
+				lgr.Info("Payload was signed by untrustred source")
+				return
+			}
+		}
+		body, err := UnmarshalGithubWebhookBody(data)
+		if err != nil {
+			lgr.Info("failed to unmarshal body into struct", "error", err)
 			return
 		}
-		bodyAsStr := string(data)
-		if gjson.Get(bodyAsStr, "sender.type").String() != "User" {
+		if body.Sender.Type != "User" {
 			return
 		}
-		if gjson.Get(bodyAsStr, "action").String() != "created" {
-			return
-		}
-		repo := gjson.Get(bodyAsStr, "repository.owner.login").String()
-		name := gjson.Get(bodyAsStr, "repository.name").String()
-		issueStr := gjson.Get(bodyAsStr, "issue.number").String()
-		issue, _ := strconv.Atoi(issueStr)
 
-		commentStr := gjson.Get(bodyAsStr, "comment.id").String()
-		commentID, _ := strconv.Atoi(commentStr)
+		if body.Action != "created" {
+			return
+		}
 
-		comment := gjson.Get(bodyAsStr, "comment.body").String()
+		repo := body.Repository.Owner.Login
+		name := body.Repository.Name
+		comment := body.Comment.Body
 		if comment == "" {
 			return
 		}
-
-		installation, _ := strconv.Atoi(gjson.Get(bodyAsStr, "installation.id").String())
-		itr, err := ghinstallation.New(http.DefaultTransport, int64(cnf.ApplicationID), int64(installation), cnf.ApplicationPrivateKey)
+		installation := body.Installation.ID
+		itr, err := ghinstallation.New(http.DefaultTransport, int64(cnf.ApplicationID), installation, cnf.ApplicationPrivateKey)
 		if err != nil {
 			lgr.Info("failed to create installation transport", "error", err.Error())
 			w.WriteHeader(500)
@@ -73,7 +69,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 
 		prbot := PrBotFile{
 			Version: "1.0.0",
-			Use:     "bot",
+			Use:     "bot-local",
 		}
 		fileContent, _, _, err := client.Repositories.GetContents(ctx, repo, name, ".prbot.yaml", nil)
 		if err != nil {
@@ -90,72 +86,99 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 			}
 
 		}
-		lines := strings.Split(comment, "\n")
-		for _, l := range lines {
-			tokens := strings.Split(l, " ")
-			if len(tokens) == 1 {
-				continue
-			}
-			root := tokens[0]
-			if root != fmt.Sprintf("/%s", prbot.Use) {
-				continue
-			}
-
-			cmd := tokens[1]
-			lgr.Info("parsing command", "cmd", l)
-			switch cmd {
-			case "help":
-				_, _, err := client.Issues.EditComment(ctx, repo, name, int64(commentID), &github.IssueComment{
-					Body: github.String(fmt.Sprintf(help, prbot.Use, prbot.Use, prbot.Use)),
-				})
-				if err != nil {
-					lgr.Info("failed to edit comment", "error", err.Error())
-					w.WriteHeader(500)
-					return
-				}
-			case "label":
-				if len(tokens) < 3 {
-					continue
-				}
-				labels := tokens[2:]
-				_, _, err := client.Issues.AddLabelsToIssue(ctx, repo, name, issue, labels)
-				if err != nil {
-					lgr.Info("failed to add issues", "error", err.Error())
-					w.WriteHeader(500)
-					return
-				}
-			case "merge":
-				message := gjson.Get(bodyAsStr, "issue.title").String()
-				_, _, err := client.PullRequests.Merge(ctx, repo, name, issue, message, &github.PullRequestOptions{
-					MergeMethod: "squash",
-				})
-				if err != nil {
-					lgr.Info("failed to merge", "error", err.Error())
-					w.WriteHeader(500)
-					return
-				}
-			case "workflow":
-				file := tokens[2]
-				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
-					Ref: gjson.Get(bodyAsStr, "repository.default_branch").String(),
-				})
-				if err != nil {
-					lgr.Info("failed to run workflow", "error", err.Error())
-					w.WriteHeader(500)
-					return
-				}
-				_, _, err = client.Issues.CreateComment(ctx, repo, name, issue, &github.IssueComment{
-					Body: github.String(fmt.Sprintf("Workflow %s started", file)),
-				})
-				if err != nil {
-					lgr.Info("failed to comment on issue", "error", err.Error())
-					w.WriteHeader(500)
-					return
-				}
-			default:
-				continue
-			}
+		if err := processComment(ctx, lgr, body, client, prbot); err != nil {
+			return
 		}
 		return
 	}
+}
+
+func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookBody, client *github.Client, prbot PrBotFile) error {
+	errs := []error{}
+	lines := strings.Split(body.Comment.Body, "\n")
+	for _, l := range lines {
+		tokens := strings.Split(l, " ")
+		if len(tokens) == 1 {
+			continue
+		}
+		root := tokens[0]
+		if root != fmt.Sprintf("/%s", prbot.Use) {
+			continue
+		}
+
+		cmd := tokens[1]
+		lgr.Info("parsing command", "cmd", l)
+		switch cmd {
+		case "help":
+			if err := onHelp(ctx, client, body, prbot); err != nil {
+				errs = append(errs, err)
+			}
+		case "label":
+			if err := onLabel(ctx, client, body, prbot, tokens); err != nil {
+				errs = append(errs, err)
+			}
+		case "merge":
+			if err := onMerge(ctx, client, body, prbot); err != nil {
+				errs = append(errs, err)
+			}
+		case "workflow":
+			file := tokens[2]
+			if err := onWorkflow(ctx, client, body, prbot, file); err != nil {
+				errs = append(errs, err)
+			}
+		default:
+			continue
+		}
+	}
+
+	if len(errs) > 0 {
+		msg := strings.Builder{}
+		for _, err := range errs {
+			msg.WriteString(fmt.Sprintf("%s\n", err.Error()))
+		}
+		return errors.New(msg.String())
+	}
+	return nil
+}
+
+func onHelp(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile) error {
+	_, _, err := client.Issues.EditComment(ctx, body.Repository.Owner.Login, body.Repository.Name, int64(body.Comment.ID), &github.IssueComment{
+		Body: github.String(fmt.Sprintf(help, prbot.Use, prbot.Use, prbot.Use)),
+	})
+	return err
+}
+
+func onLabel(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile, tokens []string) error {
+	if len(tokens) < 3 {
+		return nil
+	}
+	labels := tokens[2:]
+	_, _, err := client.Issues.AddLabelsToIssue(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.ID), labels)
+	return err
+}
+
+func onMerge(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile) error {
+	message := body.Issue.Title
+	_, _, err := client.PullRequests.Merge(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.ID), message, &github.PullRequestOptions{
+		MergeMethod: "squash",
+	})
+	return err
+}
+
+func onWorkflow(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile, file string) error {
+	repo := body.Repository.Owner.Login
+	name := body.Repository.Name
+	_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
+		Ref: body.Repository.DefaultBranch,
+	})
+	if err != nil {
+		return err
+	}
+	_, _, err = client.Issues.CreateComment(ctx, repo, name, int(body.Issue.ID), &github.IssueComment{
+		Body: github.String(fmt.Sprintf("Workflow %s started", file)),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

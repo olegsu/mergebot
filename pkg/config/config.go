@@ -13,6 +13,7 @@ type (
 		ApplicationPrivateKey    []byte
 		WebhookSecret            string
 		MarketplaceWebhookSecret string
+		SkipPayloadValidation    bool
 	}
 )
 
@@ -25,13 +26,15 @@ func BuildConfig() Config {
 	if err != nil {
 		panic(err)
 	}
-	secret := getEnvOrDie("WEBHOOK_SECRET")
-	marketplaceSecret := getEnvOrDie("MARKETPLACE_WEBHOOK_SECRET")
+	secret := os.Getenv("WEBHOOK_SECRET")
+	marketplaceSecret := os.Getenv("MARKETPLACE_WEBHOOK_SECRET")
+	skipPayloadValidation := os.Getenv("SKIP_PAYLOAD_VALIDATION") == "true"
 	cnf := Config{
 		ApplicationID:            appID,
 		ApplicationPrivateKey:    privateKey,
 		WebhookSecret:            secret,
 		MarketplaceWebhookSecret: marketplaceSecret,
+		SkipPayloadValidation:    skipPayloadValidation,
 	}
 	return cnf
 }

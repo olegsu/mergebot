@@ -40,3 +40,10 @@ func decodeSha(secret string, in []byte) string {
 	sha := hex.EncodeToString(h.Sum(nil))
 	return fmt.Sprintf("sha256=%s", sha)
 }
+
+func isValidBody(expected string, body []byte, key string) bool {
+	if expected == "" {
+		return false
+	}
+	return decodeSha(key, body) == expected
+}
