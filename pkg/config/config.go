@@ -14,6 +14,7 @@ type (
 		WebhookSecret            string
 		MarketplaceWebhookSecret string
 		SkipPayloadValidation    bool
+		DefaultRootCmd           string
 	}
 )
 
@@ -29,12 +30,14 @@ func BuildConfig() Config {
 	secret := os.Getenv("WEBHOOK_SECRET")
 	marketplaceSecret := os.Getenv("MARKETPLACE_WEBHOOK_SECRET")
 	skipPayloadValidation := os.Getenv("SKIP_PAYLOAD_VALIDATION") == "true"
+
 	cnf := Config{
 		ApplicationID:            appID,
 		ApplicationPrivateKey:    privateKey,
 		WebhookSecret:            secret,
 		MarketplaceWebhookSecret: marketplaceSecret,
 		SkipPayloadValidation:    skipPayloadValidation,
+		DefaultRootCmd:           getEnv("ROOT_CMD", "bot"),
 	}
 	return cnf
 }
@@ -48,6 +51,14 @@ func getEnvOrDie(name string) string {
 	v := os.Getenv(name)
 	if v == "" {
 		panic(fmt.Errorf("%s is required", name))
+	}
+	return v
+}
+
+func getEnv(name string, fallback string) string {
+	v := os.Getenv(name)
+	if v == "" {
+		return fallback
 	}
 	return v
 }

@@ -86,7 +86,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 		}
 		prbot := PrBotFile{
 			Version: "1.0.0",
-			Use:     "bot-local",
+			Use:     cnf.DefaultRootCmd,
 		}
 		fileContent, _, _, err := client.Repositories.GetContents(ctx, repo, name, ".prbot.yaml", nil)
 		if err != nil {
