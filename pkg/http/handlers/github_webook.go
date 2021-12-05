@@ -80,7 +80,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 		}
 
 		if !allowed {
-			lgr.Info("use is not allowed to perform the command", "user", body.Sender.Login)
+			lgr.Info("user is not allowed to perform the command", "user", body.Sender.Login)
 			return
 		}
 		prbot := PrBotFile{
