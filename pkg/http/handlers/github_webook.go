@@ -184,7 +184,7 @@ func onHelp(ctx context.Context, client *github.Client, body GithubWebhookBody, 
 }
 
 func onLabel(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile, tokens []string) error {
-	if len(tokens) < 3 {
+	if len(tokens) < 2 {
 		return nil
 	}
 	labels := tokens[2:]
