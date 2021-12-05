@@ -127,7 +127,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 
 func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookBody, client *github.Client, prbot PrBotFile) error {
 	errs := []error{}
-	lines := strings.Split(body.Comment.Body, "\n")
+	lines := strings.Split(body.Comment.Body, "\\n")
 	for _, l := range lines {
 		tokens := strings.Split(l, " ")
 		if len(tokens) == 1 {
