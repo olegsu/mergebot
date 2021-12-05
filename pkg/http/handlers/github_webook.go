@@ -145,15 +145,18 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 				errs = append(errs, err)
 			}
 		case "label":
+			lgr.Info("labeling", "tokens", tokens)
 			if err := onLabel(ctx, client, body, prbot, tokens); err != nil {
 				errs = append(errs, err)
 			}
 		case "merge":
+			lgr.Info("merging")
 			if err := onMerge(ctx, client, body, prbot); err != nil {
 				errs = append(errs, err)
 			}
 		case "workflow":
 			file := tokens[2]
+			lgr.Info("starting workflow", "file", file)
 			if err := onWorkflow(ctx, client, body, prbot, file); err != nil {
 				errs = append(errs, err)
 			}
