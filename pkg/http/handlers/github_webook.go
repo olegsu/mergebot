@@ -118,6 +118,7 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 
 		}
 		if err := processComment(ctx, lgr, body, client, prbot); err != nil {
+			lgr.Info("comment process failed", "errors", err.Error())
 			return
 		}
 		return
