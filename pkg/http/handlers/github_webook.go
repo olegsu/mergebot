@@ -67,6 +67,22 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 		client := github.NewClient(&http.Client{Transport: itr})
 		ctx := context.Background()
 
+		repository, _, err := client.Repositories.Get(ctx, repo, name)
+		if err != nil {
+			lgr.Info("failed to get repository", "error", err, "repo", repo+"/"+name)
+			return
+		}
+		allowed := false
+		if repository.Owner != nil && repository.Owner.ID != nil {
+			if *repository.Owner.ID == body.Sender.ID {
+				allowed = true
+			}
+		}
+
+		if !allowed {
+			lgr.Info("use is not allowed to perform the command", "user", body.Sender.Login)
+			return
+		}
 		prbot := PrBotFile{
 			Version: "1.0.0",
 			Use:     "bot-local",
