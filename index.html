@@ -416,7 +416,9 @@
 <li><code>/? help</code></li>
 <li><code>/? label {name}</code> - adds a label, creating new one if not exists</li>
 <li><code>/? merge</code> - squash merge the pull request</li>
-<li><code>/? workflow {name}</code> - uses workflow dispatch event api to trigger worklfow. The workflow must have <code>on: workflow_dispatch</code>.</li>
+<li><code>/? workflow {name} {key=value} {key=value}</code> - uses workflow dispatch event api to trigger worklfow. The workflow must have <code>on: workflow_dispatch</code>.</li>
+<li><code>{name}</code> the file name of the worklfow (release.yaml)</li>
+<li><code>{key=value}</code> key and value pairs to pass as an input to the workflow</li>
 </ul>
 <h3 id="permissions">Permissions<a class="headerlink" href="#permissions" title="Permanent link">&para;</a></h3>
 <p>Only a commands from the repository owner will be accepted.
