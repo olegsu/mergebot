@@ -80,6 +80,20 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
+		if repository.Organization != nil {
+			members, _, err := client.Organizations.ListMembers(ctx, repo, &github.ListMembersOptions{})
+			if err != nil {
+				lgr.Info("failed to list organization members", "error", err, "org", repo)
+				return
+			}
+			lgr.Info("checking user to be part of an organization", "members-len", len(members), "org", repo)
+			for _, m := range members {
+				if m != nil && m.ID != nil && *m.ID == body.Sender.ID {
+					allowed = true
+				}
+			}
+		}
+
 		if !allowed {
 			lgr.Info("user is not allowed to perform the command", "user", body.Sender.Login)
 			return
