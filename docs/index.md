@@ -16,7 +16,9 @@ use: bot # change me
 * `/? help`
 * `/? label {name}` - adds a label, creating new one if not exists
 * `/? merge` - squash merge the pull request
-* `/? workflow {name}` - uses workflow dispatch event api to trigger worklfow. The workflow must have `on: workflow_dispatch`.
+* `/? workflow {name} {key=value} {key=value}` - uses workflow dispatch event api to trigger worklfow. The workflow must have `on: workflow_dispatch`.
+  * `{name}` the file name of the worklfow (release.yaml)
+  * `{key=value}` key and value pairs to pass as an input to the workflow
 
 ### Permissions
 Only a commands from the repository owner will be accepted.
