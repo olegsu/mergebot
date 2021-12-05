@@ -146,7 +146,7 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 			}
 		case "label":
 			lgr.Info("labeling", "tokens", tokens)
-			if err := onLabel(ctx, client, body, prbot, tokens); err != nil {
+			if err := onLabel(ctx, lgr, client, body, prbot, tokens); err != nil {
 				errs = append(errs, err)
 			}
 		case "merge":
@@ -157,7 +157,7 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 		case "workflow":
 			file := tokens[2]
 			lgr.Info("starting workflow", "file", file)
-			if err := onWorkflow(ctx, client, body, prbot, file); err != nil {
+			if err := onWorkflow(ctx, lgr, client, body, prbot, file); err != nil {
 				errs = append(errs, err)
 			}
 		default:
@@ -183,11 +183,13 @@ func onHelp(ctx context.Context, client *github.Client, body GithubWebhookBody, 
 	return err
 }
 
-func onLabel(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile, tokens []string) error {
+func onLabel(ctx context.Context, lgr *logger.Logger, client *github.Client, body GithubWebhookBody, prbot PrBotFile, tokens []string) error {
 	if len(tokens) < 2 {
+		lgr.Info("not enough arguments to label")
 		return nil
 	}
 	labels := tokens[2:]
+	lgr.Info("adding labels", "labels", labels)
 	_, _, err := client.Issues.AddLabelsToIssue(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.ID), labels)
 	return err
 }
@@ -200,7 +202,7 @@ func onMerge(ctx context.Context, client *github.Client, body GithubWebhookBody,
 	return err
 }
 
-func onWorkflow(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile, file string) error {
+func onWorkflow(ctx context.Context, lgr *logger.Logger, client *github.Client, body GithubWebhookBody, prbot PrBotFile, file string) error {
 	repo := body.Repository.Owner.Login
 	name := body.Repository.Name
 	_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
@@ -213,6 +215,7 @@ func onWorkflow(ctx context.Context, client *github.Client, body GithubWebhookBo
 		Body: github.String(fmt.Sprintf("Workflow %s started", file)),
 	})
 	if err != nil {
+		lgr.Info("failed to comment", "error", err.Error())
 		return err
 	}
 	return nil
