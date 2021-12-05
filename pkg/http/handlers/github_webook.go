@@ -129,6 +129,9 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 	errs := []error{}
 	lines := strings.Split(body.Comment.Body, "\n")
 	for _, l := range lines {
+		if l == "\r" {
+			continue
+		}
 		tokens := strings.Split(l, " ")
 		if len(tokens) == 1 {
 			continue
