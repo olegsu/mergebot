@@ -292,6 +292,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#permissions" class="md-nav__link">
+    Permissions
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -367,6 +374,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#permissions" class="md-nav__link">
+    Permissions
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -398,9 +412,15 @@
 <span class="nt">use</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bot</span> <span class="c1"># change me </span>
 </code></pre></div>
 <h3 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h3>
-<p>/? help
-/? label {name}
-/? merge</p>
+<ul>
+<li><code>/? help</code></li>
+<li><code>/? label {name}</code> - adds a label, creating new one if not exists</li>
+<li><code>/? merge</code> - squash merge the pull request</li>
+<li><code>/? workflow {name}</code> - uses workflow dispatch event api to trigger worklfow. The workflow must have <code>on: workflow_dispatch</code>.</li>
+</ul>
+<h3 id="permissions">Permissions<a class="headerlink" href="#permissions" title="Permanent link">&para;</a></h3>
+<p>Only a commands from the repository owner will be accepted.
+Permission feature can be found <a href="https://github.com/olegsu/pull-requests-robot/issues/8">here</a> for feedback and suggestions.</p>
                 
               
               
