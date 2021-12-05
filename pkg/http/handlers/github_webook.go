@@ -15,9 +15,10 @@ import (
 
 var help = `I am here to do all the boring stuff for you!
 Here is what I can do:
-/%s help - show this message
-/%s label {name} - to add label
-/%s merge - to merge the pull request
+* "/? help"
+* "/? label {name}" - adds a label, creating new one if not exists
+* "/? merge" - squash merge the pull request
+* "/? workflow {name}" - uses workflow dispatch event api to trigger worklfow. The workflow must have "on: workflow_dispatch".
 `
 
 func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
