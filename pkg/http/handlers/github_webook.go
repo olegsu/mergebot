@@ -191,13 +191,13 @@ func onLabel(ctx context.Context, lgr *logger.Logger, client *github.Client, bod
 	}
 	labels := tokens[2:]
 	lgr.Info("adding labels", "labels", labels)
-	_, _, err := client.Issues.AddLabelsToIssue(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.ID), labels)
+	_, _, err := client.Issues.AddLabelsToIssue(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), labels)
 	return err
 }
 
 func onMerge(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile) error {
 	message := body.Issue.Title
-	_, _, err := client.PullRequests.Merge(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.ID), message, &github.PullRequestOptions{
+	_, _, err := client.PullRequests.Merge(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), message, &github.PullRequestOptions{
 		MergeMethod: "squash",
 	})
 	return err
