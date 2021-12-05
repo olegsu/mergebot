@@ -158,6 +158,7 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 				errs = append(errs, err)
 			}
 		default:
+			lgr.Info("unknown command", "cmd", cmd)
 			continue
 		}
 	}
