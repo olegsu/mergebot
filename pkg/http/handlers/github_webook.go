@@ -212,11 +212,10 @@ func onWorkflow(ctx context.Context, lgr *logger.Logger, client *github.Client, 
 	if err != nil {
 		return err
 	}
-	_, _, err = client.Issues.CreateComment(ctx, repo, name, int(body.Issue.ID), &github.IssueComment{
+	_, _, err = client.Issues.CreateComment(ctx, repo, name, int(body.Issue.Number), &github.IssueComment{
 		Body: github.String(fmt.Sprintf("Workflow %s started", file)),
 	})
 	if err != nil {
-		lgr.Info("failed to comment", "error", err.Error())
 		return err
 	}
 	return nil
