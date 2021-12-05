@@ -1,6 +1,18 @@
 name: release
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        type: choice
+        description: 'Type of the bump (major | minor | patch)'     
+        required: true
+        options: 
+        - major
+        - minor
+        - patch
+
+concurrency: server-release
 
 jobs:
   release:
@@ -8,6 +20,16 @@ jobs:
     runs-on: "ubuntu-18.04"
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '^1.17'
+    - name: Calculate Next Release Version
+      run: |
+        echo ${{ secrets.GITHUB_TOKEN }} > token
+        gh auth login --with-token < token
+        go install github.com/davidrjonas/semver-cli@latest
+        current=$(gh release list | awk '{print $1}' | awk 'NR==1' | sed s/v//g)
+        semver-cli inc ${{ github.event.inputs.bump }} $current > next_version
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     - id: 'auth'
@@ -16,11 +38,13 @@ jobs:
       with:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
     - name: Build
-      run: docker build -t $(cat docker-repository.txt):$(cat VERSION) .
+      run: docker build -t $(cat docker-repository.txt):$(cat next_version) .
     - name: Push
       run: |
         gcloud auth configure-docker us-central1-docker.pkg.dev
-        docker push $(cat docker-repository.txt):$(cat VERSION)
+        docker push $(cat docker-repository.txt):$(cat next_version)
     - name: Update Cloud run
-      run: gcloud run services update server --region us-central1 --image $(cat docker-repository.txt):$(cat VERSION)
+      run: gcloud run services update server --region us-central1 --image $(cat docker-repository.txt):$(cat next_version)
+    - name: Release
+      run: gh release create v$(cat next_version)
 

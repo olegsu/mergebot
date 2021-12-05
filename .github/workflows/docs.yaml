@@ -4,7 +4,7 @@ name: docs
 on:
   push:
     branches: [ 'main' ]
-
+concurrency: docs-release 
 jobs:
   deploy:
     runs-on: ubuntu-latest
