@@ -157,8 +157,12 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 			}
 		case "workflow":
 			file := tokens[2]
+			inputs := []string{}
+			if len(tokens) >= 3 {
+				inputs = tokens[3:]
+			}
 			lgr.Info("starting workflow", "file", file)
-			if err := onWorkflow(ctx, lgr, client, body, prbot, file); err != nil {
+			if err := onWorkflow(ctx, lgr, client, body, prbot, file, inputs); err != nil {
 				errs = append(errs, err)
 			}
 		default:
@@ -203,11 +207,22 @@ func onMerge(ctx context.Context, client *github.Client, body GithubWebhookBody,
 	return err
 }
 
-func onWorkflow(ctx context.Context, lgr *logger.Logger, client *github.Client, body GithubWebhookBody, prbot PrBotFile, file string) error {
+func onWorkflow(ctx context.Context, lgr *logger.Logger, client *github.Client, body GithubWebhookBody, prbot PrBotFile, file string, inputs []string) error {
 	repo := body.Repository.Owner.Login
 	name := body.Repository.Name
+	j := map[string]interface{}{}
+
+	if len(inputs) > 0 {
+		for _, in := range inputs {
+			kv := strings.Split(in, "=")
+			if (len(kv)) == 2 {
+				j[kv[0]] = kv[1]
+			}
+		}
+	}
 	_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
-		Ref: body.Repository.DefaultBranch,
+		Ref:    body.Repository.DefaultBranch,
+		Inputs: j,
 	})
 	if err != nil {
 		return err
