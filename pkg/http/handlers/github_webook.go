@@ -29,103 +29,124 @@ func GithubWebhook(cnf config.Config) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		lgr := logger.New()
-		lgr.Info("received webhook")
-
-		data := read(r.Body)
-		if !cnf.SkipPayloadValidation {
-			if !isValidBody(r.Header.Get("X-Hub-Signature-256"), data, cnf.WebhookSecret) {
-				lgr.Info("Payload was signed by untrustred source")
-				return
-			}
-		}
-		body, err := UnmarshalGithubWebhookBody(data)
-		if err != nil {
-			lgr.Info("failed to unmarshal body into struct", "error", err)
-			return
-		}
-		if body.Sender.Type != "User" {
-			return
-		}
-
-		if body.Action != "created" {
-			return
-		}
-
-		repo := body.Repository.Owner.Login
-		name := body.Repository.Name
-		comment := body.Comment.Body
-		if comment == "" {
-			return
-		}
-		installation := body.Installation.ID
-		itr, err := ghinstallation.New(http.DefaultTransport, int64(cnf.ApplicationID), installation, cnf.ApplicationPrivateKey)
-		if err != nil {
-			lgr.Info("failed to create installation transport", "error", err.Error())
+		if err := githubWebhook(r.Context(), lgr, cnf, read(r.Body), r.Header); err != nil {
+			lgr.Error(err, "failed to handler webhook")
 			w.WriteHeader(500)
 			return
 		}
-		// Use installation transport with client.
-		client := github.NewClient(&http.Client{Transport: itr})
-		ctx := context.Background()
 
-		repository, _, err := client.Repositories.Get(ctx, repo, name)
-		if err != nil {
-			lgr.Info("failed to get repository", "error", err, "repo", repo+"/"+name)
-			return
-		}
-		allowed := false
-		if repository.Owner != nil && repository.Owner.ID != nil {
-			if *repository.Owner.ID == body.Sender.ID {
-				allowed = true
-			}
-		}
-
-		if repository.Organization != nil {
-			members, _, err := client.Organizations.ListMembers(ctx, repo, &github.ListMembersOptions{})
-			if err != nil {
-				lgr.Info("failed to list organization members", "error", err, "org", repo)
-				return
-			}
-			lgr.Info("checking user to be part of an organization", "members-len", len(members), "org", repo)
-			for _, m := range members {
-				if m != nil && m.ID != nil && *m.ID == body.Sender.ID {
-					allowed = true
-				}
-			}
-		}
-
-		if !allowed {
-			lgr.Info("user is not allowed to perform the command", "user", body.Sender.Login)
-			return
-		}
-		prbot := PrBotFile{
-			Version: "1.0.0",
-			Use:     cnf.DefaultRootCmd,
-		}
-		fileContent, _, _, err := client.Repositories.GetContents(ctx, repo, name, ".prbot.yaml", nil)
-		if err != nil {
-			lgr.Info("failed to get .prbot.yaml file content, using default config", "error", err.Error())
-		} else {
-			content, err := fileContent.GetContent()
-			if err != nil {
-				lgr.Info("failed to get .prbot.yaml content, using default config", "error", err.Error())
-			}
-
-			prbot, err = UnmarshalPrBotFile([]byte(content))
-			if err != nil {
-				lgr.Info("failed to unmarshal .prbot.yaml, using default config", "error", err.Error())
-			}
-
-		}
-		if err := processComment(ctx, lgr, body, client, prbot); err != nil {
-			lgr.Info("comment process failed", "errors", err.Error())
-			return
-		}
-		return
 	}
 }
 
-func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookBody, client *github.Client, prbot PrBotFile) error {
+func githubWebhook(ctx context.Context, lgr *logger.Logger, cnf config.Config, data []byte, headers http.Header) error {
+	lgr.Info("received webhook")
+
+	if !cnf.SkipPayloadValidation {
+		if !isValidBody(headers.Get("X-Hub-Signature-256"), data, cnf.WebhookSecret) {
+			lgr.Info("Payload was signed by untrustred source")
+			return nil
+		}
+	}
+	body, err := UnmarshalGithubWebhookBody(data)
+	if err != nil {
+		lgr.Info("failed to unmarshal body into struct", "error", err)
+		return err
+	}
+	if body.Sender.Type != "User" {
+		return nil
+	}
+
+	if body.Action != "created" {
+		return nil
+	}
+
+	comment := body.Comment.Body
+	if comment == "" {
+		return nil
+	}
+	installation := body.Installation.ID
+	itr, err := ghinstallation.New(http.DefaultTransport, int64(cnf.ApplicationID), installation, cnf.ApplicationPrivateKey)
+	if err != nil {
+		lgr.Info("failed to create installation transport", "error", err.Error())
+		return err
+	}
+	// Use installation transport with client.
+	client := github.NewClient(&http.Client{Transport: itr})
+	gh := NewClient(WithGithubClient(client))
+
+	authorized, err := isAuthorized(ctx, gh, body)
+	if err != nil {
+		return err
+	}
+	if !authorized {
+		lgr.Info("user is not allowed to perform the command", "user", body.Sender.Login)
+		return nil
+	}
+
+	prbot := getPRBotDefinition(ctx, lgr, cnf, gh, body)
+	if err := processComment(ctx, lgr, body, gh, prbot); err != nil {
+		lgr.Info("comment process failed", "errors", err.Error())
+		return nil
+	}
+	return nil
+}
+
+func isAuthorized(ctx context.Context, gh GithubClient, hook GithubWebhookBody) (bool, error) {
+	repo := hook.Repository.Owner.Login
+	name := hook.Repository.Name
+	repository, _, err := gh.GetRepository(ctx, repo, name)
+	if err != nil {
+		return false, fmt.Errorf("failed to get repository %s: %w", repo+"/"+name, err)
+	}
+	allowed := false
+	if repository.Owner != nil && repository.Owner.ID != nil {
+		if *repository.Owner.ID == hook.Sender.ID {
+			allowed = true
+		}
+	}
+
+	if repository.Organization != nil {
+		members, _, err := gh.ListOrganizationMembers(ctx, repo, &github.ListMembersOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to list organization (%s) members: %s", repo, err)
+		}
+		for _, m := range members {
+			if m != nil && m.ID != nil && *m.ID == hook.Sender.ID {
+				allowed = true
+			}
+		}
+	}
+	return allowed, nil
+}
+
+func getPRBotDefinition(ctx context.Context, lgr *logger.Logger, cnf config.Config, gh GithubClient, hook GithubWebhookBody) PrBotFile {
+	repo := hook.Repository.Owner.Login
+	name := hook.Repository.Name
+	prbot := PrBotFile{
+		Version: "1.0.0",
+		Use:     cnf.DefaultRootCmd,
+	}
+	fileContent, _, _, err := gh.GetFileContent(ctx, repo, name, ".prbot.yaml", nil)
+	if err != nil {
+		lgr.Info("failed to get .prbot.yaml file content, using default config", "error", err.Error())
+		return prbot
+	}
+	content, err := fileContent.GetContent()
+	if err != nil {
+		lgr.Info("failed to get .prbot.yaml content, using default config", "error", err.Error(), "content", content)
+		return prbot
+	}
+
+	prbot, err = UnmarshalPrBotFile([]byte(content))
+	if err != nil {
+		lgr.Info("failed to unmarshal .prbot.yaml, using default config", "error", err.Error(), "content", content)
+		return prbot
+	}
+
+	return prbot
+}
+
+func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookBody, gh GithubClient, prbot PrBotFile) error {
 	errs := []error{}
 	lines := strings.Split(body.Comment.Body, "\n")
 	for _, l := range lines {
@@ -145,17 +166,17 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 		lgr.Info("parsing command", "cmd", l)
 		switch cmd {
 		case "help":
-			if err := onHelp(ctx, client, body, prbot); err != nil {
+			if err := onHelp(ctx, gh, body, prbot); err != nil {
 				errs = append(errs, err)
 			}
 		case "label":
 			lgr.Info("labeling", "tokens", tokens)
-			if err := onLabel(ctx, lgr, client, body, prbot, tokens); err != nil {
+			if err := onLabel(ctx, lgr, gh, body, prbot, tokens); err != nil {
 				errs = append(errs, err)
 			}
 		case "merge":
 			lgr.Info("merging")
-			if err := onMerge(ctx, client, body, prbot); err != nil {
+			if err := onMerge(ctx, gh, body, prbot); err != nil {
 				errs = append(errs, err)
 			}
 		case "workflow":
@@ -165,7 +186,7 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 				inputs = tokens[3:]
 			}
 			lgr.Info("starting workflow", "file", file)
-			if err := onWorkflow(ctx, lgr, client, body, prbot, file, inputs); err != nil {
+			if err := onWorkflow(ctx, lgr, gh, body, prbot, file, inputs); err != nil {
 				errs = append(errs, err)
 			}
 		default:
@@ -184,33 +205,33 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 	return nil
 }
 
-func onHelp(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile) error {
-	_, _, err := client.Issues.EditComment(ctx, body.Repository.Owner.Login, body.Repository.Name, int64(body.Comment.ID), &github.IssueComment{
+func onHelp(ctx context.Context, gh GithubClient, body GithubWebhookBody, prbot PrBotFile) error {
+	_, _, err := gh.EditIssueComment(ctx, body.Repository.Owner.Login, body.Repository.Name, int64(body.Comment.ID), &github.IssueComment{
 		Body: github.String(fmt.Sprintf(help, prbot.Use, prbot.Use, prbot.Use)),
 	})
 	return err
 }
 
-func onLabel(ctx context.Context, lgr *logger.Logger, client *github.Client, body GithubWebhookBody, prbot PrBotFile, tokens []string) error {
+func onLabel(ctx context.Context, lgr *logger.Logger, gh GithubClient, body GithubWebhookBody, prbot PrBotFile, tokens []string) error {
 	if len(tokens) < 2 {
 		lgr.Info("not enough arguments to label")
 		return nil
 	}
 	labels := tokens[2:]
 	lgr.Info("adding labels", "labels", labels)
-	_, _, err := client.Issues.AddLabelsToIssue(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), labels)
+	_, _, err := gh.AddLabelsToIssue(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), labels)
 	return err
 }
 
-func onMerge(ctx context.Context, client *github.Client, body GithubWebhookBody, prbot PrBotFile) error {
+func onMerge(ctx context.Context, gh GithubClient, body GithubWebhookBody, prbot PrBotFile) error {
 	message := body.Issue.Title
-	_, _, err := client.PullRequests.Merge(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), message, &github.PullRequestOptions{
+	_, _, err := gh.MergePullRequest(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), message, &github.PullRequestOptions{
 		MergeMethod: "squash",
 	})
 	return err
 }
 
-func onWorkflow(ctx context.Context, lgr *logger.Logger, client *github.Client, body GithubWebhookBody, prbot PrBotFile, file string, inputs []string) error {
+func onWorkflow(ctx context.Context, lgr *logger.Logger, gh GithubClient, body GithubWebhookBody, prbot PrBotFile, file string, inputs []string) error {
 	repo := body.Repository.Owner.Login
 	name := body.Repository.Name
 	j := map[string]interface{}{}
@@ -223,14 +244,14 @@ func onWorkflow(ctx context.Context, lgr *logger.Logger, client *github.Client, 
 			}
 		}
 	}
-	_, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
+	_, err := gh.CreateWorkflowDispatchEventByFileName(ctx, repo, name, file, github.CreateWorkflowDispatchEventRequest{
 		Ref:    body.Repository.DefaultBranch,
 		Inputs: j,
 	})
 	if err != nil {
 		return err
 	}
-	_, _, err = client.Issues.CreateComment(ctx, repo, name, int(body.Issue.Number), &github.IssueComment{
+	_, _, err = gh.CreateIssueComment(ctx, repo, name, int(body.Issue.Number), &github.IssueComment{
 		Body: github.String(fmt.Sprintf("Workflow %s started", file)),
 	})
 	if err != nil {
