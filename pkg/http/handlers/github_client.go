@@ -16,6 +16,7 @@ type (
 		AddLabelsToIssue(ctx context.Context, owner string, name string, issue int, labels []string) ([]*github.Label, *github.Response, error)
 		MergePullRequest(ctx context.Context, owner string, name string, issue int, commitMessage string, opt *github.PullRequestOptions) (*github.PullRequestMergeResult, *github.Response, error)
 		CreateWorkflowDispatchEventByFileName(ctx context.Context, owner, repo, workflowFileName string, event github.CreateWorkflowDispatchEventRequest) (*github.Response, error)
+		GetIssue(ctx context.Context, owner string, repo string, number int) (*github.Issue, *github.Response, error)
 	}
 
 	gh struct {
@@ -64,4 +65,7 @@ func (g *gh) MergePullRequest(ctx context.Context, owner string, name string, is
 }
 func (g *gh) CreateWorkflowDispatchEventByFileName(ctx context.Context, owner, repo, workflowFileName string, event github.CreateWorkflowDispatchEventRequest) (*github.Response, error) {
 	return g.clinet.Actions.CreateWorkflowDispatchEventByFileName(ctx, owner, repo, workflowFileName, event)
+}
+func (g *gh) GetIssue(ctx context.Context, owner string, repo string, number int) (*github.Issue, *github.Response, error) {
+	return g.clinet.Issues.Get(ctx, owner, repo, number)
 }

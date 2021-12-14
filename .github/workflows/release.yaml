@@ -1,16 +1,8 @@
 name: release
 
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        type: choice
-        description: 'Type of the bump (major | minor | patch)'     
-        required: true
-        options: 
-        - major
-        - minor
-        - patch
+  push:
+    branches: [ 'main' ]
 
 concurrency: server-release
 
@@ -28,8 +20,12 @@ jobs:
         echo ${{ secrets.GITHUB_TOKEN }} > token
         gh auth login --with-token < token
         go install github.com/davidrjonas/semver-cli@latest
+        last_pr=$(gh pr list -s merged --json number,mergedAt -q '. |= sort_by(.mergedAt) | .[-1].number')
+        bump=$(gh pr view --json labels --jq '.labels | map(select(.name | contains("release")) | .name) | .[0]')
+        if ! [[ "$bump" =~ ^(release-minor|release-patch|release-major) ]]; then echo "Not a release commit" && exit 0; fi;        
         current=$(gh release list | awk '{print $1}' | awk 'NR==1' | sed s/v//g)
-        semver-cli inc ${{ github.event.inputs.bump }} $current > next_version
+        semver-cli inc $(echo $bump | sed s/release-//g) $current > next_version
+        echo "next version: $(cat next_version)"
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     - id: 'auth'
