@@ -23,4 +23,3 @@ use: bot # change me
 ### Permissions
 Only a commands from the repository owner will be accepted.
 Permission feature can be found [here](https://github.com/olegsu/pull-requests-robot/issues/8) for feedback and suggestions.
-
