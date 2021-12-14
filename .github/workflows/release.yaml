@@ -22,9 +22,9 @@ jobs:
         go install github.com/davidrjonas/semver-cli@latest
         commit=$(git log --format="%H" -n 1)
         last_pr=$(gh api -X GET search/issues -f q='repo:olegsu/pull-requests-robot is:closed is:pr sort:created-desc $commit' --jq '.items[0].number')
-        if  [[ $last_pr = ""  ]]; then echo "No pull request found" && exit 0; fi;
+        if  [[ $last_pr = ""  ]]; then echo "No pull request found" && exit 1; fi;
         bump=$(gh pr view $last_pr --json labels --jq '.labels | map(select(.name | contains("release")) | .name) | .[0]')
-        if ! [[ "$bump" =~ ^(release-minor|release-patch|release-major) ]]; then echo "Not a release commit" && exit 0; fi;        
+        if ! [[ "$bump" =~ ^(release-minor|release-patch|release-major) ]]; then echo "Not a release commit" && exit 1; fi;        
         current=$(gh release list | awk '{print $1}' | awk 'NR==1' | sed s/v//g)
         semver-cli inc $(echo $bump | sed s/release-//g) $current > next_version
         echo "next version: $(cat next_version)"
