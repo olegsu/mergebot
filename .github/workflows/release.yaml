@@ -17,7 +17,8 @@ jobs:
         go-version: '^1.17'
     - name: Calculate Next Release Version
       run: |
-        gh auth login --with-token < echo ${{ secrets.GITHUB_TOKEN }}
+        echo ${{ secrets.GITHUB_TOKEN }} > token
+        gh auth login --with-token < token
         commit=$(git log --format="%H" -n 1)
         last_pr=$(gh api -X GET search/issues -f q="repo:olegsu/pull-requests-robot is:closed is:pr sort:created-desc $commit" --jq '.items[0].number')
         if  [[ $last_pr = ""  ]]; then echo "No pull request found" && exit 1; fi;
