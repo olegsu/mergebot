@@ -15,7 +15,7 @@ import (
 
 var help = `I am here to do all the boring stuff for you!
 Here is what I can do:
-* "/? help"
+* "/? help - show this message"
 * "/? label {name}" - adds a label, creating new one if not exists
 * "/? merge" - squash merge the pull request
 * "/? workflow {name}" - uses workflow dispatch event api to trigger worklfow. The workflow must have "on: workflow_dispatch".
