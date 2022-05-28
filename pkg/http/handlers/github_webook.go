@@ -175,8 +175,12 @@ func processComment(ctx context.Context, lgr *logger.Logger, body GithubWebhookB
 				errs = append(errs, err)
 			}
 		case "merge":
-			lgr.Info("merging")
-			if err := onMerge(ctx, gh, body, prbot); err != nil {
+			method := "squash"
+			if len(tokens) >= 3 {
+				method = tokens[2]
+			}
+			lgr.Info("merging", "method", method)
+			if err := onMerge(ctx, gh, body, prbot, method); err != nil {
 				errs = append(errs, err)
 			}
 		case "workflow":
@@ -223,10 +227,10 @@ func onLabel(ctx context.Context, lgr *logger.Logger, gh GithubClient, body Gith
 	return err
 }
 
-func onMerge(ctx context.Context, gh GithubClient, body GithubWebhookBody, prbot PrBotFile) error {
+func onMerge(ctx context.Context, gh GithubClient, body GithubWebhookBody, prbot PrBotFile, method string) error {
 	message := body.Issue.Title
 	_, _, err := gh.MergePullRequest(ctx, body.Repository.Owner.Login, body.Repository.Name, int(body.Issue.Number), message, &github.PullRequestOptions{
-		MergeMethod: "squash",
+		MergeMethod: method,
 	})
 	return err
 }
