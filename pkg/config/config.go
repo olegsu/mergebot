@@ -37,7 +37,7 @@ func BuildConfig() Config {
 		WebhookSecret:            secret,
 		MarketplaceWebhookSecret: marketplaceSecret,
 		SkipPayloadValidation:    skipPayloadValidation,
-		DefaultRootCmd:           getEnv("ROOT_CMD", "bot"),
+		DefaultRootCmd:           getEnv("ROOT_CMD", "pr-bot"),
 	}
 	return cnf
 }
